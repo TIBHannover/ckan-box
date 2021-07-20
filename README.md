@@ -14,7 +14,7 @@ Prerequisites
 
 Perform the following steps in the terminal (Linux / macOS) or in the GitBash (Windows).
 ```
-git clone git@github.com:TIBHannover/
+git clone https://github.com/TIBHannover/ckan-box.git
 cd 
 vagrant up
 ```
@@ -24,7 +24,7 @@ vagrant reload --provision
 ```
 
 When the installation is complete (a few minutes, depending on the download speed), the index can be opened in the browser:
-....
+http://192.168.10.55
 
 
 ## Direct usage of Ansible

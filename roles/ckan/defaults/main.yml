@@ -1,0 +1,50 @@
+---
+### In Production Passwords and User should be change
+db_name: ckan_default
+db_user: ckan_default
+db_password: ckan123
+ckan_system_user: ckan
+ckan_admin_password: ckan123
+ckan_repository_address: 'git+https://github.com/ckan/ckan.git@ckan-2.9.2#egg=ckan'
+debug_requirements: 'pip install -r default/src/ckan/dev-requirements.txt'
+debug_active: 'false'
+ckan_install_base_path: '/home/{{ ckan_system_user }}/ckan'
+ckan_install_path: '{{ ckan_install_base_path }}/lib/default'
+ckan_conf_path: '/etc/ckan/default/'
+lang: en
+#Without http://
+ckan_site_host:   192.168.10.55
+#University internal use
+ini_config: development.ini #production.ini
+ckan_storage_path: /usr/lib/ckan/default/filestore
+
+
+#### Authorization
+
+#Allow users who are not members of any organization to create datasets, default: true. create_unowned_dataset must also be True, otherwise setting
+#Default value: True
+create_dataset_if_not_in_organization: True
+
+#Allow users to create groups.
+#Default value: False
+user_create_groups: False
+
+#Allow users to create organizations.
+#Default value: True
+user_create_organizations: True
+
+#Allow users to delete groups.
+#Default value: True
+user_delete_groups: True
+
+#Allow users to delete organizations.
+#Default value: True
+user_delete_organizations: True
+
+#Allow new user accounts to be created via the API by anyone. When False only sysadmins are authorised.
+#Default value: False
+create_user_via_api: False
+
+#Allow new user accounts to be created via the Web.
+#Default value: True
+create_user_via_web: True

@@ -1,0 +1,36 @@
+---
+
+- name: WSGI script file copy
+  become_user: root
+  become: yes
+  template:
+    src: ../../../templates/default/nginx/wsgi.py
+    dest: /etc/ckan/default/
+
+- name: install uwsgi
+  become: true
+  become_user: root
+  become_method: sudo
+  shell: |
+    . /usr/lib/ckan/default/bin/activate
+    pip install uwsgi
+    cp /usr/lib/ckan/default/src/ckan/ckan-uwsgi.ini /etc/ckan/default/
+    exit
+
+- name: uwsgi conf file copy
+  become_user: root
+  become: yes
+  template:
+    src: ../../../templates/default/nginx/ckan-uwsgi.conf
+    dest: /etc/supervisor/conf.d/
+
+- name: Enable Ckan nginx site
+  become: true
+  become_user: root
+  become_method: sudo
+  shell: |
+    rm -vi /etc/nginx/sites-enabled/default
+    ln -s /etc/nginx/sites-available/ckan /etc/nginx/sites-enabled/ckan
+    rm /etc/nginx/sites-enabled/default
+    supervisorctl restart ckan-uwsgi:*
+    service nginx restart

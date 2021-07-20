@@ -1,0 +1,29 @@
+---
+
+### For Deploy Ckan comment it out if not necessary
+##Install nginx
+- name: Install nginx
+  become: true
+  become_user: root
+  become_method: sudo
+  apt:
+    name: "{{ nginxpack }}"
+  vars:
+    nginxpack:
+      - nginx-common
+      - nginx
+      - supervisor
+
+- name: check nginx ckan conf
+  stat:
+    path: /etc/nginx/sites-available/ckan
+  register: ngc
+
+- name: nginx ckan conf
+  become: yes
+  become_user: root
+  become_method: sudo
+  template:
+    src: ../../../templates/default/nginx/ckan
+    dest: /etc/nginx/sites-available/
+  #when: ad2c.stat.exists == false

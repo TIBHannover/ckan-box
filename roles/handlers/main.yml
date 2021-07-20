@@ -1,0 +1,16 @@
+---
+
+handlers:
+   - name: Restart Nginx
+     service:
+       name: nginx
+       state: restarted
+   - name: Restart Solr
+       name: solr
+       state: restarted
+   - name: Restart Redis
+       name: redis
+       state: started
+   - name: Restart Postgresql
+       name: postgresql
+       state: restarted

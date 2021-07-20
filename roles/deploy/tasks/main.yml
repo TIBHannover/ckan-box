@@ -1,0 +1,66 @@
+---
+
+- name: import deploy with nginx
+  include: deploy_uwsgi_nginx/deploy_with_nginx_uwsgi.yml
+
+- name: Initialize CKAN database
+  become_user: ckan
+  become: yes
+  shell: |
+    . /usr/lib/ckan/default/bin/activate
+    cd /usr/lib/ckan/default/src
+    ckan -c /etc/ckan/default/development.ini db init
+    exit
+  when: symnewschema.state == "file"
+
+- name: Give ckan permissions to default
+  become: true
+  become_user: root
+  become_method: sudo
+  file:
+    path: /usr/lib/ckan/default
+    owner: ckan
+    recurse: yes
+
+- name: Give ckan permissions to filestore
+  become: true
+  become_user: root
+  become_method: sudo
+  file:
+    path: /usr/lib/ckan/default/filestore
+    owner: ckan
+    recurse: yes
+
+- name: restart supervisor
+  become: true
+  become_user: root
+  become_method: sudo
+  command: service supervisor restart
+
+## Important to reset the write rules for www-data
+- name: Make filestore directory
+  become_user: ckan
+  shell: |
+   sudo chown -R www-data:ckan /usr/lib/ckan/default/filestore
+
+###### Ausführung nach der kompletten Installation!!! ##########
+- name: set ckan datastore permissions
+  become_user: ckan
+  become: yes
+  shell: |
+    . /usr/lib/ckan/default/bin/activate
+    cd /usr/lib/ckan/default/bin/
+    ckan -c /etc/ckan/default/development.ini datastore set-permissions | sudo -u postgres psql --set ON_ERROR_STOP=1
+    exit
+
+##Ckan sysadmin user
+#- name: Check if CKAN admin user exists
+#  become_user: ckan
+#  become: yes
+#  shell: |
+#    . /usr/lib/ckan/default/bin/activate
+#    cd /usr/lib/ckan/default/src/ckan
+#     echo 'y' | ckan -c /etc/ckan/default/development.ini sysadmin add ckan email=ckan@tib.eu name=ckan | echo '12345678'
+#    exit
+#  changed_when: False
+#  register: ckan_admin_user

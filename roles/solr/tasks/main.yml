@@ -1,0 +1,90 @@
+---
+
+- name: Download Solr 8.2.0
+  become: true
+  become_user: ckan
+  get_url:
+    url: https://archive.apache.org/dist/lucene/solr/8.2.0/solr-8.2.0.tgz
+    dest: /home/ckan/solr-8.2.0.tgz
+    checksum: sha512:beb4e37fc21bf483e3b6bae43cb06a49bc420a0f2b920c97909a69a5efeacba1e7d2ff09ae8018446c87bf007f88f06a59de73cd1923f0967e8206629b0509b6
+    force: no
+
+- name: Expand Solr archive
+  become: true
+  become_user: root
+  become_method: sudo
+  unarchive:
+    src: /home/ckan/solr-8.2.0.tgz
+    dest: /home/ckan/
+    copy: no
+
+- name: Run Solr installation script
+  become: true
+  become_user: root
+  become_method: sudo
+  shell: /home/ckan/solr-8.2.0/bin/install_solr_service.sh /home/ckan/solr-8.2.0.tgz
+    creates=/opt/solr/bin/solr
+
+- name: change owner (and group)
+  become: true
+  become_user: root
+  become_method: sudo
+  file:
+    path: /opt/solr-8.2.0
+    owner: solr
+    recurse: true
+
+- name: change owner (and group)
+  become: true
+  become_user: root
+  become_method: sudo
+  file:
+    path: /var/solr
+    owner: solr
+    recurse: true
+
+- name: check ckan core exists
+  become: true
+  become_user: root
+  become_method: sudo
+  stat:
+    path: /var/solr/data/ckan/
+  register: cor
+
+- name: Create Solr CKAN configuration
+  become: true
+  become_user: solr
+  shell: ./solr create_core -c ckan
+  args:
+    chdir: /opt/solr-8.2.0/bin/
+  when: cor.stat.exists == False
+
+- name: copy ckan schema to new solr core
+  become: yes
+  become_user: solr
+  become_method: sudo
+  template:
+    src: ../../templates/default/solr/solr8/schema.xml.j2
+    dest: /var/solr/data/ckan/conf/schema.xml
+  register: symnewschema
+
+
+- name: Clean managed schema
+  become: yes
+  become_user: solr
+  file:
+    state: absent
+    path: "/var/solr/data/ckan/conf/managed-schema"
+  register: cleansolr
+
+- name: Ensure Solr is enabled on boot
+  service:
+    name: solr
+    enabled: yes
+
+- name: Restart solr
+  become: yes
+  become_user: root
+  service:
+    name: solr
+    state: restarted

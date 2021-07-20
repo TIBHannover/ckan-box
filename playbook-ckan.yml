@@ -1,0 +1,12 @@
+---
+
+- hosts: all
+  vars:
+    allow_world_readable_tmpfiles: true
+  roles:
+     - basics
+     - meta
+     - postgres
+     - ckan
+     - solr
+     - deploy

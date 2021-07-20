@@ -1,0 +1,109 @@
+---
+- name: copy dev.ini
+  become: yes
+  become_user: root
+  become_method: sudo
+  template:
+    src: '../../templates/default/ckan/development.ini.j2'
+    dest: /etc/ckan/default/
+
+- name: Create directory for ckan config files
+  become: true
+  become_user: root
+  become_method: sudo
+  file: 'path={{ ckan_conf_path }} owner={{ ckan_system_user }} state=directory'
+
+- name: Make secondary directory to link confs into
+  become: true
+  become_user: root
+  become_method: sudo
+  file: 'path=/etc/ckan/ state=directory owner={{ ckan_system_user }}'
+
+- name: Make secondary directory to link installation into
+  become: true
+  become_user: root
+  become_method: sudo
+  file: 'path=/usr/lib/ckan state=directory owner={{ ckan_system_user }}'
+
+- name: Make secondary directory to link installation into
+  become: true
+  become_user: root
+  become_method: sudo
+  file: 'path=/usr/lib/ckan/default state=directory owner=www-data'
+
+- name: Make filestore directory
+  become: true
+  become_user: root
+  become_method: sudo
+  shell: |
+    mkdir /usr/lib/ckan/default/filestore
+    chown -R www-data:ckan /usr/lib/ckan/default
+    chmod -R u+rwx,g+rwx /usr/lib/ckan/default
+    exit
+
+- name: Create virt env
+  become: true
+  become_user: ckan
+  shell: |
+    python3 -m venv /usr/lib/ckan/default
+      . /usr/lib/ckan/default/bin/activate
+      pip install setuptools==44.1.0
+      pip install --upgrade pip
+    exit
+
+- name: Run CKAN installation script
+  become: true
+  become_user: ckan
+  shell: |
+    . /usr/lib/ckan/default/bin/activate
+    pip install --ignore-installed -e {{ ckan_repository_address }}
+    cd /usr/lib/ckan
+    pip install -r default/src/ckan/requirements.txt
+    {{ debug_requirements }}
+    deactivate
+    . /usr/lib/ckan/default/bin/activate
+    exit
+
+- name: Check whether CKAN is installed
+  stat: path={{ ckan_install_path }}/src/ckan
+
+- name: Check whether there is a virtualenv already
+  stat: path={{ ckan_install_path }}/bin/activate
+
+
+- name: Ensure CKAN config is present
+  become: true
+  become_user: root
+  become_method: sudo
+  template:
+    src: ../../templates/default/ckan/development.ini.j2
+    dest: /etc/ckan/default/development.ini
+  when: not ansible_check_mode
+
+- name: Ensure CKAN who.ini is symlinked
+  become_user: root
+  become: yes
+  become_method: sudo
+  file:
+    src: /usr/lib/ckan//default/src/ckan/ckan/config/who.ini
+    dest: /etc/ckan/default/who.ini
+    state: link
+
+## Fix ckan user rights
+- name: Give user Ckan rights
+  become_user: root
+  become: yes
+  file:
+    path: /usr/lib/ckan
+    state: directory
+    recurse: yes
+    owner: ckan
+    group: www-data
+
+
+
+
+
+
+
+
